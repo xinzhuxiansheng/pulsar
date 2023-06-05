@@ -1,6 +1,7 @@
 
 package com.yzhou.consumer;
 
+import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -18,6 +19,7 @@ public class ConsumerAckTest {
                 .topic("my-topic")
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscriptionName("subscription_test")
+                .acknowledgmentGroupTime(100, TimeUnit.MICROSECONDS) // 累计确认
                 .subscribe();
 
         Message<String> msg = consumer.receive();

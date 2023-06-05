@@ -1,7 +1,7 @@
 
 package com.yzhou.consumer;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -9,7 +9,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 
-public class ConsumerAsyncAckTest {
+public class ConsumerInterceptorTest {
     public static void main(String[] args) throws PulsarClientException {
         PulsarClient client = PulsarClient.builder()
                 .serviceUrl("pulsar://192.168.175.129:6650")
@@ -19,16 +19,16 @@ public class ConsumerAsyncAckTest {
                 .topic("my-topic")
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscriptionName("subscription_test")
+                .intercept(new MessageLengthInterceptor())
                 .subscribe();
 
-        CompletableFuture<Message<String>> messageCompletableFuture = consumer.receiveAsync();
-        messageCompletableFuture.thenAccept((Message<String> msgAsync) -> {
-            System.out.println("Async message received: " + msgAsync.getValue());
-            try {
-                consumer.acknowledge(msgAsync);
-            } catch (PulsarClientException e) {
-                consumer.negativeAcknowledge(msgAsync);
-            }
-        });
+        Message<String> msg = consumer.receive();
+        try {
+            System.out.println("Message received: " + new String(msg.getData()));
+            // 确认消息已收到
+            consumer.acknowledge(msg);
+        } catch (Exception e) {
+            consumer.negativeAcknowledge(msg);
+        }
     }
 }
